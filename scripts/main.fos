@@ -524,14 +524,14 @@ bool critter_stealing( Critter& cr, Critter& thief, Item& item, uint count )
         weightModifier = 10;
     }
 	
-    // Count modifier
+    /* Count modifier */
     int kCount = count / steal;
     if( kCount <= 0 )
 	{
         kCount = 1;
 	}
 
-    // Steal timer
+    /* Steal timer */
     uint lastStealCrId = thief.Stat[ ST_LAST_STEAL_CR_ID ];
     uint stealCount = thief.Stat[ ST_STEAL_COUNT ];
     if( lastStealCrId == cr.Id && thief.Timeout[ TO_STEALING ] > 0 )
@@ -2034,7 +2034,7 @@ bool critter_use_skill( Critter& cr, int skill, Critter@ targetCr, Item@ targetI
 					}
 
 					/* Base critter's on cooldown */
-					else if ( isPlayer && cr.Timeout[ TO_SK_STEAL > 0])
+					else if ( isPlayer && cr.Timeout[ TO_SK_STEAL > 0 ])
 					{
 						cr.SayMsg( SAY_NETMSG, TEXTMSG_GAME, STR_SK_COOLDOWN );
 						return true;
@@ -2044,17 +2044,28 @@ bool critter_use_skill( Critter& cr, int skill, Critter@ targetCr, Item@ targetI
 					else 
 					{
 						/* Inventory check roll */
-						cr.Action( ACTION_PICK_CRITTER, 1, null );
-						int inv_steal_check = 
+						int inv_check = ( targetCr.Stat[ ST_LUCK ] * 10 ) - ( cr.Stat[ SK_STEAL ] / 3 );
 
-						/* bool critter_stealing returns a successful roll */
-						if( successful )
+						if( inv_check < 0.5 )
 						{
-							CrimeLog( cr, crInfo( cr ) + " checks inventory of: " + crInfo( targetCr ) );
-							cr.TimeoutBase[ TO_SK_STEAL ] = STEAL_TIMEOUT( cr );
-							cr.StatBase[ ST_LAST_STEAL_CR_ID ] = 0;
-							cr.StatBase[ ST_STEAL_COUNT ] = 0;
-							return true;
+							inv_check_success = 0.5;
+						}
+						
+						bool inv_check_success = !(Random(1, 100) > inv_check);
+
+						if ( inv_check_success )
+						{
+							cr.Action( ACTION_PICK_CRITTER, 1, null );
+
+							/* bool critter_stealing returns a successful roll & inventory check*/
+							if( successful )
+							{
+								CrimeLog( cr, crInfo( cr ) + " checks inventory of: " + crInfo( targetCr ) );
+								cr.TimeoutBase[ TO_SK_STEAL ] = STEAL_TIMEOUT( cr );
+								cr.StatBase[ ST_LAST_STEAL_CR_ID ] = 0;
+								cr.StatBase[ ST_STEAL_COUNT ] = 0;
+								return true;
+							}
 						}
 					}
 				}
